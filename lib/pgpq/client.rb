@@ -61,12 +61,20 @@ module PGPQ
       rescue => ex
         @logger.info ex.message
         @logger.info ex.backtrace.join("\n")
-        res = Hashie::Mash.new(success: false, error: "Response could not be parsed. (#{ex.message})")
+        res = Hashie::Mash.new(success: false, error: {type: "ParseError", message: "Response could not be parsed. (#{ex.message})"})
       end
-      raise res.error if !res.success
+      raise ClientError.new(res.error.message, res.error.type) if !res.success
       return res
     end
 
+  end
+
+  class ClientError < StandardError
+    attr_reader :type
+    def initialize(msg, type="UnknownError")
+      @type = type
+      super(msg)
+    end
   end
 
 end
