@@ -5,11 +5,14 @@ module PGPQ
 
   class Client
 
+    attr_accessor :logger
+
     def initialize(opts={})
       @url = opts[:url]
+      @logger = opts[:logger]
       @conn = Faraday.new(url: @url) do |f|
         f.request :url_encoded
-        f.response :logger
+        #f.response :logger
         f.adapter Faraday.default_adapter
       end
     end
@@ -45,13 +48,19 @@ module PGPQ
       return res.data
     end
 
+    def get_queue(opts={})
+      resp = @conn.get "/queue", opts
+      res = parse_response(resp)
+      return res.data
+    end
+
     def parse_response(resp)
       begin
         jsp = JSON.parse(resp.body)
         res =  Hashie::Mash.new(jsp)
       rescue => ex
-        Rails.logger.info ex.message
-        Rails.logger.info ex.backtrace.join("\n")
+        @logger.info ex.message
+        @logger.info ex.backtrace.join("\n")
         res = Hashie::Mash.new(success: false, error: "Response could not be parsed. (#{ex.message})")
       end
       raise res.error if !res.success

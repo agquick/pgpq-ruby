@@ -8,8 +8,19 @@ module PGPQ
       @count = opts[:count] || 5
     end
 
+    def logger
+      @client.logger
+    end
+
     def process_queue(opts={})
+      qrt = Time.now - 60
       loop do
+        # log from queue
+        if @logger && (Time.now.to_i - qrt.to_i) > 30
+          queue = @client.get_queue(name: @queue_name)
+          @logger.info "QUEUE UPDATE (#{queue.name}): #{queue.jobs_count} jobs waiting"
+          qrt = Time.now
+        end
         jobs = get_jobs
         if jobs.length == 0
           if opts[:continuous] == true
@@ -28,7 +39,7 @@ module PGPQ
 
     def get_jobs
       jobs = @client.dequeue_jobs(queue_name: @queue_name, count: @count)
-      puts jobs
+      #puts jobs
       return jobs
     end
 
