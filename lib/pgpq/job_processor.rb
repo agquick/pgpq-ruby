@@ -16,9 +16,9 @@ module PGPQ
       qrt = Time.now - 60
       loop do
         # log from queue
-        if @logger && (Time.now.to_i - qrt.to_i) > 30
+        if logger && (Time.now.to_i - qrt.to_i) > 30
           queue = @client.get_queue(name: @queue_name)
-          @logger.info "QUEUE UPDATE (#{queue.name}): #{queue.jobs_count} jobs waiting"
+          logger.info "QUEUE UPDATE (#{queue.name}): #{queue.jobs_count} jobs waiting"
           qrt = Time.now
         end
         jobs = get_jobs
